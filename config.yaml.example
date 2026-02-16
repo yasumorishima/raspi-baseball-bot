@@ -12,6 +12,9 @@ gateway:
 
 heartbeat:
   enabled: true
+  # ⚠️ 注意: ここに書いたスケジュールはOpenClawのcronシステムに自動反映されません。
+  # スケジュールは ~/.openclaw/cron/jobs.json に別途登録が必要です。
+  # 以下はプロンプト内容の参考テンプレートです。
   jobs:
     - name: "野球豆知識"
       cron: "30 7 * * *"   # 毎日7:30

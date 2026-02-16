@@ -5,6 +5,13 @@ Raspberry Pi 5 + OpenClaw + Gemini 2.5-flash（無料枠）で、NPB/MLBの野�
 
 Windows版Claude Code DesktopのSSHバグ（/usr/bin/ssh ハードコード問題）の回避策として、PowerShell → SSH → Claude Code CLIの構成を採用。
 
+## 対応環境
+この手順はRaspberry Pi向けですが、Node.js 22 + 2GB RAM以上のLinux環境なら応用可能です：
+- Oracle Cloud無料枠（4コア24GB RAM、完全無料）
+- ConoHa / さくらVPS等の国内VPS
+- AWS / GCP無料枠
+- 古いPC / ノートPC（Ubuntu等をインストール）
+
 ## 背景
 - Claude Code DesktopのWindows SSH接続は2026年2月時点でバグあり（[Issue #25659](https://github.com/anthropics/claude-code/issues/25659)）
 - 回避策：PowerShellからSSHでラズパイに入り、ラズパイ上でClaude Code CLIを直接使用
@@ -113,6 +120,7 @@ claude
 - BOOTSTRAP.mdが残っているとbootstrapping状態で止まる
 - X Free Tierは月500ポスト上限（1日16ツイート目安）
 - botアカウントはプロフィールにbot明記必須
+- `config.yaml` の `heartbeat.schedules` はOpenClawのcronシステムに自動反映されません。スケジュールは `~/.openclaw/cron/jobs.json` に別途登録が必要です。
 
 ## 参考
 - [OpenClaw公式](https://docs.openclaw.ai/)
