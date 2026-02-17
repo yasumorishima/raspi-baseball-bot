@@ -1,12 +1,14 @@
 # ラズパイ × OpenClaw 野球情報自動ツイートbot
 
 ## 概要
-Raspberry Pi 5 + OpenClaw + Gemini 2.5-flash（無料枠）で、NPB/MLBの野球情報を自動ツイートするbotの構築手順。
+Raspberry Pi 5 + OpenClaw + Ollama（ローカルLLM）で、NPB/MLBの野球情報を自動ツイートするbotの構築手順。
+
+LLMをローカルで動かすため **API制限なし・完全無料** で運用可能。
 
 Windows版Claude Code DesktopのSSHバグ（/usr/bin/ssh ハードコード問題）の回避策として、PowerShell → SSH → Claude Code CLIの構成を採用。
 
 ## 対応環境
-この手順はRaspberry Pi向けですが、Node.js 22 + 2GB RAM以上のLinux環境なら応用可能です：
+この手順はRaspberry Pi向けですが、Node.js 22 + 4GB RAM以上のLinux環境なら応用可能です：
 - Oracle Cloud無料枠（4コア24GB RAM、完全無料）
 - ConoHa / さくらVPS等の国内VPS
 - AWS / GCP無料枠
@@ -18,14 +20,14 @@ Windows版Claude Code DesktopのSSHバグ（/usr/bin/ssh ハードコード問�
 
 ## 必要なもの
 ### ハードウェア
-- Raspberry Pi 5（4GB以上、8GB推奨）
+- Raspberry Pi 5（**8GB推奨**、Ollamaモデル動作に必要）
 - microSD 32GB以上 or NVMe SSD
 - USB-C電源（27W推奨）
 - ヒートシンク/ファン付きケース
 
-### アカウント・APIキー（すべて無料）
-- Google AI Studio → Gemini APIキー
-- X (Twitter) Developer → Free Tier APIキー（月500ポスト）
+### アカウント・APIキー
+- X (Twitter) Developer → Free Tier APIキー（月500ポスト、無料）
+- Gemini APIキーは不要（Ollamaで代替）
 
 ## セットアップ手順
 
@@ -55,28 +57,64 @@ sudo npm install -g @anthropic-ai/claude-code
 claude  # 初回は認証URLをPCブラウザで開く
 ```
 
-### 4. OpenClawインストール
+### 4. Ollamaインストール（ラズパイ上）
 ```bash
-curl -fsSL https://openclaw.ai/install.sh | bash
-openclaw onboard  # LLMプロバイダー: Google Gemini
+curl -fsSL https://ollama.com/install.sh | sh
+# systemdサービスとして自動起動
+
+# モデルダウンロード（約3GB、時間かかる）
+ollama pull gemma3:4b
+
+# 確認
+ollama list
 ```
 
-### 5. 設定ファイル
+### 5. OpenClawインストール
+```bash
+curl -fsSL https://openclaw.ai/install.sh | bash
+openclaw onboard  # LLMプロバイダー設定
+```
+
+### 6. OpenClawにOllama設定
+```bash
+# ~/.openclaw/.env に追記
+echo 'OLLAMA_API_KEY=ollama' >> ~/.openclaw/.env
+
+# モデル変更
+openclaw models set ollama/gemma3:4b
+```
+
+### 7. 設定ファイル
 - SOUL.md → エージェントの人格定義
-- config.yaml → Heartbeatスケジュール
+- config.yaml → Heartbeatスケジュール（参考用）
 - .env → APIキー（※リポジトリに含めない）
 
-### 6. セキュリティ対策
+### 8. セキュリティ対策
 - UFWファイアウォール有効化（SSH以外拒否）
 - ゲートウェイはlocalhost限定
 - ClawHubからスキルをインストールしない
 - .envのパーミッション600
 
+## スマホからの遠隔操作（Tailscale + Termius）
+外出先からAndroidスマホでbotを操作できます。
+
+```bash
+# ラズパイにTailscaleをインストール
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+
+# キー期限切れ時の再認証
+sudo tailscale up --reset  # 表示されたURLをブラウザで開く
+```
+
+AndroidアプリはTailscale + Terminusを使用。TerminusでラズパイのTailscale IPにSSH接続。
+
 ## ファイル構成
 ```
 ~/.openclaw/
 ├── SOUL.md                  # bot人格定義
-├── config.yaml              # Heartbeatスケジュール
+├── config.yaml              # Heartbeatスケジュール（参考用）
+├── openclaw.json            # モデル設定（実際の設定ファイル）
 ├── .env                     # APIキー（git管理外）
 ├── healthcheck.sh           # 死活監視
 └── skills/
@@ -99,7 +137,7 @@ openclaw onboard  # LLMプロバイダー: Google Gemini
 ## コスト
 | 項目 | 費用 |
 |------|------|
-| Gemini 2.5-flash | 無料枠 |
+| Ollama (gemma3:4b) | **完全無料・制限なし** |
 | X API Free Tier | 月500ポスト無料 |
 | ラズパイ電気代 | 月約300円 |
 
@@ -116,11 +154,12 @@ claude
 ```
 
 ## 注意事項
-- gemini-2.0-flash / gemini-3-pro-preview は無料枠クォータ0（2026-02-16確認）
 - BOOTSTRAP.mdが残っているとbootstrapping状態で止まる
 - X Free Tierは月500ポスト上限（1日16ツイート目安）
 - botアカウントはプロフィールにbot明記必須
 - `config.yaml` の `heartbeat.schedules` はOpenClawのcronシステムに自動反映されません。スケジュールは `~/.openclaw/cron/jobs.json` に別途登録が必要です。
+- モデル設定は `config.yaml` の `llm:` セクションではなく `openclaw.json` で管理（`openclaw models set` コマンドで変更）
+- Brave Search APIで `search_lang: "ja"` が無効エラーが出るが既知の問題、動作に支障なし
 
 ## 参考
 - [OpenClaw公式](https://docs.openclaw.ai/)
