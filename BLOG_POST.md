@@ -65,7 +65,7 @@
 - LLM（Gemini, Claude, Ollama等）のゲートウェイ
 - cronジョブでスケジュール実行ができる
 - `exec` ツールでシェルコマンドを実行できる（AIが自分でスクリプトを叩ける）
-- `web_search` で最新情報を検索できる
+- `web_search` で最新情報を検索できる（Brave Search APIキーが必要になる場合があります）
 - Discord, Slack, Telegram等との連携も可能
 
 今回は **cron → Gemini → web_search → exec（tweet.js）** という流れで使っています。
@@ -166,7 +166,7 @@ systemctl --user start openclaw-gateway
 - cronのプロンプト文をそのままツイート本文として渡す（作文していない）
 - 阪神タイガースの情報を聞いたのに英語で「Let's go Orix!」と回答（チーム名すら違う）
 
-**2日間の格闘の末、Geminiに切り替えたら18秒でツイートが投稿されました。** 世の中にはお金で解決すべき問題がある。
+**2日間の格闘の末、Geminiに切り替えたら18秒でツイートが投稿されました。** 世の中には、こだわりを捨てるべきときもある。
 
 詳細なトラブルシューティングは [OLLAMA_TROUBLESHOOTING.md](OLLAMA_TROUBLESHOOTING.md) にまとめてあるので、同じ道を行く方の参考になれば幸いです。
 
