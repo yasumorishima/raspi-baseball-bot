@@ -1,25 +1,11 @@
 #!/bin/bash
-# healthcheck.sh - OpenClaw死活監視スクリプト
+# healthcheck.sh - OpenClaw Gateway 死活監視スクリプト
 # Place in ~/.openclaw/healthcheck.sh
-# crontab例: */10 * * * * ~/.openclaw/healthcheck.sh >> ~/.openclaw/healthcheck.log 2>&1
+# crontab例: */5 * * * * ~/.openclaw/healthcheck.sh
 
-GATEWAY_URL="http://localhost:3000/health"
 LOG_FILE="$HOME/.openclaw/healthcheck.log"
 MAX_LOG_LINES=1000
-
-check_gateway() {
-  response=$(curl -s -o /dev/null -w "%{http_code}" "$GATEWAY_URL" 2>/dev/null)
-  echo "$response"
-}
-
-restart_openclaw() {
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] OpenClaw gateway down. Restarting..."
-  pkill -f "openclaw" 2>/dev/null
-  sleep 2
-  nohup openclaw start >> "$HOME/.openclaw/openclaw.log" 2>&1 &
-  sleep 5
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Restart attempted."
-}
+STATE_FILE="/tmp/openclaw-healthcheck-state"
 
 # ログローテーション（1000行超えたら古い行を削除）
 if [ -f "$LOG_FILE" ]; then
@@ -29,10 +15,16 @@ if [ -f "$LOG_FILE" ]; then
   fi
 fi
 
-# ヘルスチェック
-status=$(check_gateway)
-if [ "$status" != "200" ]; then
-  restart_openclaw
+# ゲートウェイの状態確認（systemdサービス）
+status=$(systemctl --user is-active openclaw-gateway 2>/dev/null)
+
+if [ "$status" = "active" ]; then
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] OK ($status)" >> "$LOG_FILE"
+  rm -f "$STATE_FILE"
 else
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] OK (HTTP $status)"
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Gateway down ($status). Restarting..." >> "$LOG_FILE"
+  systemctl --user restart openclaw-gateway
+  sleep 5
+  new_status=$(systemctl --user is-active openclaw-gateway 2>/dev/null)
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Restart result: $new_status" >> "$LOG_FILE"
 fi

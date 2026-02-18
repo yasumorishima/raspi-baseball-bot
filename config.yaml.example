@@ -1,45 +1,26 @@
 # OpenClaw config.yaml example
 # APIキーは .env に記載し、このファイルには含めない
-
-llm:
-  provider: google
-  model: gemini-2.5-flash-preview-04-17
-  # api_key は .env の GEMINI_API_KEY を参照
-
-gateway:
-  host: localhost  # セキュリティのためlocalhost限定
-  port: 3000
+#
+# ⚠️ 注意: heartbeat.schedulesセクションはOpenClawのcronに自動反映されません。
+# スケジュールは `openclaw cron add` コマンドで登録してください。
+# ここに書いてあるのはプロンプト内容の参考テンプレートです。
 
 heartbeat:
   enabled: true
-  # ⚠️ 注意: ここに書いたスケジュールはOpenClawのcronシステムに自動反映されません。
-  # スケジュールは ~/.openclaw/cron/jobs.json に別途登録が必要です。
-  # 以下はプロンプト内容の参考テンプレートです。
-  jobs:
-    - name: "野球豆知識"
-      cron: "30 7 * * *"   # 毎日7:30
-      prompt: "今日の野球豆知識を1つツイートしてください。ハッシュタグ #野球 #豆知識 をつけて。"
+  max_daily_runs: 15
+  quiet_hours:
+    start: "23:00"
+    end: "07:00"
 
-    - name: "MLB結果"
-      cron: "0 8 * * *"    # 毎日8:00
-      prompt: "昨日のMLB試合結果（日本人選手の活躍を中心に）をツイートしてください。ハッシュタグ #MLB をつけて。"
-
-    - name: "トレード情報_昼"
-      cron: "0 12 * * *"   # 毎日12:00
-      prompt: "最新のNPB/MLBトレード・移籍情報があればツイートしてください。なければスキップ。"
-
-    - name: "トレード情報_夕"
-      cron: "0 18 * * *"   # 毎日18:00
-      prompt: "本日のNPB/MLBのニュースをツイートしてください。ハッシュタグ #NPB #MLB をつけて。"
-
-    - name: "NPB結果"
-      cron: "0 22 * * *"   # 毎日22:00
-      prompt: "本日のNPB試合結果をツイートしてください。ハッシュタグ #NPB をつけて。"
-
-    - name: "週間スタッツ"
-      cron: "0 9 * * 1"    # 毎週月曜9:00
-      prompt: "今週のNPB/MLB注目スタッツを分析してツイートしてください。ハッシュタグ #野球 #データ分析 をつけて。"
-
-    - name: "クリーンアップ"
-      cron: "0 3 * * *"    # 毎日深夜3:00
-      prompt: "twitter-cleanupスキルを使って、30日以上前のツイートといいねを削除してください。"
+# --- 以下は cronジョブ登録時のプロンプト参考例 ---
+# openclaw cron add --cron "0 9 * * *" --tz "Asia/Tokyo" --name "WBC 09:00" \
+#   --system-event "WBCの最新情報（試合結果・注目選手・大会の展開）を調べて140字以内でツイートして。"
+#
+# openclaw cron add --cron "0 8 * * *" --tz "Asia/Tokyo" --name "MLB結果" \
+#   --system-event "昨日のMLB試合結果を調べて140字以内でツイートして。日本人選手の活躍を中心に。"
+#
+# openclaw cron add --cron "0 22 * * *" --tz "Asia/Tokyo" --name "NPB結果" \
+#   --system-event "今日のNPB試合結果を調べて140字以内でツイートして。"
+#
+# openclaw cron add --cron "0 12,18 * * *" --tz "Asia/Tokyo" --name "移籍情報チェック" \
+#   --system-event "NPB/MLBの最新ニュースや移籍情報を調べて140字以内でツイートして。特になければツイートしなくてOK。"

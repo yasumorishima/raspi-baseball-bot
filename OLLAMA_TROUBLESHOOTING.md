@@ -1,10 +1,17 @@
 # OpenClaw + Ollama on Raspberry Pi 5 — 罠と解決策まとめ
 
-> 最終更新: 2026-02-18
+> **⚠️ 注意: このプロジェクトではOllamaからGemini APIに移行しました。**
+> Raspberry Pi 5 + llama3.2:3b では速度・品質ともに実用レベルに達しなかったため、
+> Gemini 2.5 Flash（無料枠）を使用しています。
+> このドキュメントはOllamaを試す方への参考として残しています。
+
+> 最終更新: 2026-02-19
 > 環境: Raspberry Pi 5 8GB / Ollama 0.16.2 / OpenClaw 2026.2.15 / llama3.2-bot:3b
 
 Gemini APIの無料枠制限を回避するためにOllamaへ移行する中で踏んだ罠と、その解決策をまとめます。
 同じ構成を試す方の参考になれば。
+
+**結論: Pi 5 (8GB) + 3Bモデルではtool calling精度・日本語品質・推論速度すべてが不足。Gemini無料枠（15 RPM / 1500 RPD）の方が圧倒的に実用的でした。**
 
 ---
 

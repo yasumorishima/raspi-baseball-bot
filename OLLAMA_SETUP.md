@@ -1,6 +1,9 @@
 # Ollama セットアップメモ
 
-## 目的
+> **⚠️ 注意: このプロジェクトではOllamaからGemini APIに移行しました。**
+> 詳細は [README.md](README.md) のOllamaセクションを参照。
+
+## 目的（当初）
 Gemini API（無料枠制限で1日3〜5回程度しかツイートできない）→ Ollama（ローカルLLM、制限なし）に切り替え
 
 ## 環境
