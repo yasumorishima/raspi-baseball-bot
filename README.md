@@ -1,4 +1,4 @@
-# ラズパイ × OpenClaw 野球情報自動ツイートbot
+# OpenClaw入門：ラズパイ × Geminiで自動ツイートbot
 
 ## 概要
 Raspberry Pi 5 + OpenClaw + Gemini API（無料枠）で、野球情報を自動ツイートするbot。
