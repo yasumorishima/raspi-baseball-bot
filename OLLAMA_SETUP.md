@@ -1,8 +1,7 @@
 # Ollama セットアップメモ
 
 ## 目的
-Gemini API（無料枠制限で1日3回程度しかツイートできない）→ Ollama（ローカルLLM、制限なし）に切り替え。
-さらに gemma3:4b → llama3.2:3b に変更（OpenClawの `web_search`/`exec` ツールにはfunction calling対応モデルが必須のため）。
+Gemini API（無料枠制限で1日3回程度しかツイートできない）→ Ollama（ローカルLLM、制限なし）に切り替え
 
 ## 環境
 - RPi5 8GB
@@ -19,8 +18,8 @@ curl -fsSL https://ollama.com/install.sh | sh
 
 ### 2. モデルDL
 ```bash
-ollama pull llama3.2:3b
-# → llama3.2:3b (2.0GB) ダウンロード済み
+ollama pull gemma3:4b
+# → gemma3:4b (3.3GB) ダウンロード済み
 ```
 
 ### 3. OpenClawにOllama設定
@@ -29,20 +28,20 @@ ollama pull llama3.2:3b
 OLLAMA_API_KEY=ollama
 
 # モデル変更（config.yamlではなくopenclaw.jsonで管理されている）
-openclaw models set ollama/llama3.2:3b
+openclaw models set ollama/gemma3:4b
 ```
 
 ### 4. 確認
 ```bash
-ollama list  # llama3.2:3b 確認済み
-# ゲートウェイログで agent model: ollama/llama3.2:3b 確認済み
+ollama list  # gemma3:4b 確認済み
+# ゲートウェイログで agent model: ollama/gemma3:4b 確認済み
 ```
 
 ## ⚠️ 実際の構成メモ（想定と違った点）
 - `~/raspi-baseball-bot/` はRPiには存在しない（Windowsのリポジトリパス）
 - OpenClawの設定は `~/.openclaw/` 配下で管理
 - LLMモデル設定は `config.yaml` の `llm:` セクションではなく `openclaw.json` で管理
-- モデル変更コマンドは `openclaw models set ollama/llama3.2:3b`
+- モデル変更コマンドは `openclaw models set ollama/gemma3:4b`
 
 ## 既知の無関係なエラー
 - Brave Search API で `search_lang: "ja"` が無効エラー → 今回の変更前からある既存問題、無視でOK

@@ -27,7 +27,7 @@ Windows版Claude Code DesktopのSSHバグ（/usr/bin/ssh ハードコード問�
 
 ### アカウント・APIキー
 - X (Twitter) Developer → Free Tier APIキー（月500ポスト、無料）
-- Gemini APIキーは不要（Ollamaローカル推論で代替）
+- Gemini APIキーは不要（Ollamaで代替）
 
 ## セットアップ手順
 
@@ -62,8 +62,8 @@ claude  # 初回は認証URLをPCブラウザで開く
 curl -fsSL https://ollama.com/install.sh | sh
 # systemdサービスとして自動起動
 
-# モデルダウンロード（約2GB、時間かかる）
-ollama pull llama3.2:3b
+# モデルダウンロード（約3GB、時間かかる）
+ollama pull gemma3:4b
 
 # 確認
 ollama list
@@ -81,7 +81,7 @@ openclaw onboard  # LLMプロバイダー設定
 echo 'OLLAMA_API_KEY=ollama' >> ~/.openclaw/.env
 
 # モデル変更
-openclaw models set ollama/llama3.2:3b
+openclaw models set ollama/gemma3:4b
 ```
 
 ### 7. 設定ファイル
@@ -137,7 +137,7 @@ AndroidアプリはTailscale + Terminusを使用。TerminusでラズパイのTai
 ## コスト
 | 項目 | 費用 |
 |------|------|
-| Ollama (llama3.2:3b) | **完全無料・制限なし** |
+| Ollama (gemma3:4b) | **完全無料・制限なし** |
 | X API Free Tier | 月500ポスト無料 |
 | ラズパイ電気代 | 月約300円 |
 
@@ -154,32 +154,12 @@ claude
 ```
 
 ## 注意事項
-
-### 基本
 - BOOTSTRAP.mdが残っているとbootstrapping状態で止まる
 - X Free Tierは月500ポスト上限（1日16ツイート目安）
 - botアカウントはプロフィールにbot明記必須
-- `config.yaml` の `heartbeat.schedules` はOpenClawのcronシステムに自動反映されません。スケジュールは `~/.openclaw/cron/jobs.json` に別途登録が必要です
+- `config.yaml` の `heartbeat.schedules` はOpenClawのcronシステムに自動反映されません。スケジュールは `~/.openclaw/cron/jobs.json` に別途登録が必要です。
 - モデル設定は `config.yaml` の `llm:` セクションではなく `openclaw.json` で管理（`openclaw models set` コマンドで変更）
 - Brave Search APIで `search_lang: "ja"` が無効エラーが出るが既知の問題、動作に支障なし
-
-### モデル選定
-- OpenClawの `web_search`/`exec` ツールを使うにはfunction calling対応モデルが必須
-- `gemma3:4b` はツール非対応 → `llama3.2:3b`（2.0GB）を使用
-- 日本語重視なら `qwen2.5:1.5b` も候補（推論速度: 約10 tokens/s）
-- 4-bit量子化モデル（Q4_K_M）推奨。8GB RAMでのコンテキスト長は4096〜8192が安定域
-
-### Ollama運用の罠
-- `OLLAMA_KEEP_ALIVE=-1` でモデルをメモリ常駐させると再ロード不要になるが、他プロセスとのメモリ競合に注意
-- `OLLAMA_LOAD_TIMEOUT` を十分に延長しないと、初回ロード中にサービスがタイムアウトで落ちる
-- コンテキスト長を32768等に上げすぎるとKVキャッシュがRAMを食い尽くしOOM Killerが発動する
-
-### 長期運用の罠
-- microSDは書き込み寿命が短い。ログ・DB・モデルはNVMe SSD推奨
-- Playwright（Chromium）プロセスのメモリリークに注意。数日でOOM発生の可能性あり → 定期rebootまたはプロセス強制終了を推奨
-- `openclaw.json` の `agents.defaults.timeoutSeconds` を十分に長く設定（LLM推論が30秒〜1分かかる場合、短いタイムアウトで「沈黙のbot」になる）
-- IPv6環境ではAPI接続時に名前解決で5〜8分ハングすることがある → `/etc/sysctl.conf` でIPv6無効化を検討
-- アクティブクーラー必須。冷却不足で82°C超えるとサーマルスロットリング → 推論タイムアウトの連鎖障害
 
 ## 参考
 - [OpenClaw公式](https://docs.openclaw.ai/)
