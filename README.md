@@ -60,14 +60,34 @@ claude  # 初回は認証URLをPCブラウザで開く
 ### 4. Ollamaインストール（ラズパイ上）
 ```bash
 curl -fsSL https://ollama.com/install.sh | sh
-# systemdサービスとして自動起動
+# → systemdサービスとして自動起動
 
-# モデルダウンロード（約3GB、時間かかる）
-ollama pull gemma3:4b
+# スワップを2GBに拡張（デフォルト200MBでは不足）
+sudo sed -i 's/CONF_SWAPSIZE=200/CONF_SWAPSIZE=2048/' /etc/dphys-swapfile
+sudo dphys-swapfile swapoff && sudo dphys-swapfile setup && sudo dphys-swapfile swapon
+
+# systemd設定（モデル常駐・タイムアウト延長）
+sudo mkdir -p /etc/systemd/system/ollama.service.d
+sudo tee /etc/systemd/system/ollama.service.d/override.conf > /dev/null << 'EOF'
+[Service]
+Environment="OLLAMA_KEEP_ALIVE=24h"
+Environment="OLLAMA_NUM_PARALLEL=1"
+Environment="OLLAMA_LOAD_TIMEOUT=30m"
+Environment="OLLAMA_DEBUG=1"
+EOF
+sudo systemctl daemon-reload && sudo systemctl restart ollama
+
+# ベースモデルダウンロード（約2GB）
+ollama pull llama3.2:3b
+
+# Modelfileでbot用カスタムモデルを作成
+ollama create llama3.2-bot:3b -f /path/to/Modelfile
 
 # 確認
 ollama list
 ```
+
+> 詳細な設定・トラブル対応は [OLLAMA_SETUP.md](./OLLAMA_SETUP.md) を参照。
 
 ### 5. OpenClawインストール
 ```bash
@@ -77,19 +97,60 @@ openclaw onboard  # LLMプロバイダー設定
 
 ### 6. OpenClawにOllama設定
 ```bash
-# ~/.openclaw/.env に追記
+# .envにOllama用のダミーAPIキーを追加
 echo 'OLLAMA_API_KEY=ollama' >> ~/.openclaw/.env
 
 # モデル変更
-openclaw models set ollama/gemma3:4b
+openclaw models set ollama/llama3.2-bot:3b
+
+# エージェントタイムアウトを延長（デフォルト10分では短すぎる）
+openclaw config set agents.defaults.timeoutSeconds 3600
+
+# 不要なツールをすべて無効化（システムプロンプトを軽くするため）
+openclaw config set tools.deny '["read","edit","write","process","browser","canvas","nodes","message","tts","gateway","agents_list","sessions_list","sessions_history","sessions_send","sessions_spawn","subagents","session_status","web_search","web_fetch","memory_search","memory_get","cron"]' --json
 ```
 
-### 7. 設定ファイル
+### 7. OpenClawのdistパッチ（必須）
+OpenClawはOllamaのcontextWindowを128K固定でハードコードしており、RPi5では動作しない。
+**インストール・アップデートのたびに以下のパッチを再適用する。**
+
+```bash
+# contextWindow: 128K → 8192
+for f in \
+  ~/openclaw/dist/plugin-sdk/model-selection-AqojAoRn.js \
+  ~/openclaw/dist/auth-profiles-BT9SuY8t.js \
+  ~/openclaw/dist/model-selection-CJoUqb8d.js \
+  ~/openclaw/dist/model-auth-CV_4hyfG.js \
+  ~/openclaw/dist/model-selection-bvGotck9.js; do
+  sed -i 's/OLLAMA_DEFAULT_CONTEXT_WINDOW = 128e3/OLLAMA_DEFAULT_CONTEXT_WINDOW = 8192/' "$f"
+done
+
+# HARD_MIN: 16K → 6144
+for f in \
+  ~/openclaw/dist/plugin-sdk/reply-CWOwz-a_.js \
+  ~/openclaw/dist/pi-embedded-Dk6f-sJC.js \
+  ~/openclaw/dist/pi-embedded-BfTG8NvM.js \
+  ~/openclaw/dist/reply-CCS1zuBM.js \
+  ~/openclaw/dist/subagent-registry-8P-93r_3.js; do
+  sed -i 's/CONTEXT_WINDOW_HARD_MIN_TOKENS = 16e3/CONTEXT_WINDOW_HARD_MIN_TOKENS = 6144/' "$f"
+done
+
+# stream: true → false（prompt eval中のタイムアウトを回避）
+for f in \
+  ~/openclaw/dist/model-selection-CJoUqb8d.js \
+  ~/openclaw/dist/model-auth-CV_4hyfG.js \
+  ~/openclaw/dist/auth-profiles-BT9SuY8t.js \
+  ~/openclaw/dist/model-selection-bvGotck9.js; do
+  sed -i 's/stream: true,/stream: false,/' "$f"
+done
+```
+
+### 8. 設定ファイル
 - SOUL.md → エージェントの人格定義
 - config.yaml → Heartbeatスケジュール（参考用）
 - .env → APIキー（※リポジトリに含めない）
 
-### 8. セキュリティ対策
+### 9. セキュリティ対策
 - UFWファイアウォール有効化（SSH以外拒否）
 - ゲートウェイはlocalhost限定
 - ClawHubからスキルをインストールしない
@@ -122,6 +183,13 @@ AndroidアプリはTailscale + Terminusを使用。TerminusでラズパイのTai
     │   └── tweet.js         # ツイート投稿
     └── twitter-cleanup/
         └── cleanup.js       # 古ツイート削除
+
+このリポジトリ:
+├── OLLAMA_SETUP.md          # Ollama/OpenClawセットアップ詳細メモ
+├── OLLAMA_TROUBLESHOOTING.md  # 罠と解決策まとめ（7項目）
+├── SOUL.md.example          # bot人格定義サンプル
+├── config.yaml.example      # スケジュール設定サンプル
+└── healthcheck.sh           # 死活監視スクリプト
 ```
 
 ## 自動ツイートスケジュール
@@ -137,7 +205,7 @@ AndroidアプリはTailscale + Terminusを使用。TerminusでラズパイのTai
 ## コスト
 | 項目 | 費用 |
 |------|------|
-| Ollama (gemma3:4b) | **完全無料・制限なし** |
+| Ollama (llama3.2-bot:3b) | **完全無料・制限なし** |
 | X API Free Tier | 月500ポスト無料 |
 | ラズパイ電気代 | 月約300円 |
 
@@ -160,8 +228,13 @@ claude
 - `config.yaml` の `heartbeat.schedules` はOpenClawのcronシステムに自動反映されません。スケジュールは `~/.openclaw/cron/jobs.json` に別途登録が必要です。
 - モデル設定は `config.yaml` の `llm:` セクションではなく `openclaw.json` で管理（`openclaw models set` コマンドで変更）
 - Brave Search APIで `search_lang: "ja"` が無効エラーが出るが既知の問題、動作に支障なし
+- **`openclaw update` を実行するとdistパッチが上書きされる。** 更新後は手順7のパッチを再適用する
+- `OLLAMA_LOAD_TIMEOUT=0` は「無制限」ではなく「デフォルト5分」になる罠に注意。明示的な値を指定する
+- 応答は2〜5分程度かかる。タイムアウトが続く場合は [OLLAMA_TROUBLESHOOTING.md](./OLLAMA_TROUBLESHOOTING.md) を参照
 
 ## 参考
+- [OLLAMA_SETUP.md](./OLLAMA_SETUP.md) — Ollama/OpenClawセットアップ詳細
+- [OLLAMA_TROUBLESHOOTING.md](./OLLAMA_TROUBLESHOOTING.md) — 罠と解決策まとめ
 - [OpenClaw公式](https://docs.openclaw.ai/)
 - [Claude Code Desktop SSH Issue #25659](https://github.com/anthropics/claude-code/issues/25659)
 - [OpenClawセキュリティ警告（Qiita）](https://qiita.com/emi_ndk/)
