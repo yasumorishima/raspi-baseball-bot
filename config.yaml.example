@@ -2,9 +2,10 @@
 # APIキーは .env に記載し、このファイルには含めない
 
 llm:
-  provider: google
-  model: gemini-2.5-flash-preview-04-17
-  # api_key は .env の GEMINI_API_KEY を参照
+  provider: ollama
+  model: llama3.2:3b
+  # ⚠️ 実際のモデル設定は openclaw.json で管理（openclaw models set コマンドで変更）
+  # ここは参考テンプレートです
 
 gateway:
   host: localhost  # セキュリティのためlocalhost限定
