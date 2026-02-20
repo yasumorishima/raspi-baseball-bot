@@ -181,6 +181,10 @@ AndroidアプリはTailscale + Terminusを使用。TerminusでラズパイのTai
 
 Gemini無料枠は13ジョブ/日 × 30日 = 390ツイート < 月500上限で十分収まります。
 
+## トラブルシューティング
+- [Ollama セットアップ・トラブル対応](OLLAMA_SETUP.md)
+- [ツイート投稿プロンプト問題（Gemini exec未実行）](PROMPT_TROUBLESHOOTING.md)
+
 ## 注意事項
 - X Free Tierは月500ポスト上限（1日16ツイート目安）
 - botアカウントはプロフィールにbot明記必須
