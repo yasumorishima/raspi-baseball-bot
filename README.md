@@ -185,6 +185,22 @@ Gemini無料枠は13ジョブ/日 × 30日 = 390ツイート < 月500上限で�
 - [Ollama セットアップ・トラブル対応](OLLAMA_SETUP.md)
 - [ツイート投稿プロンプト問題（Gemini exec未実行）](PROMPT_TROUBLESHOOTING.md)
 
+## 現在の稼働状況
+
+**⏸️ 停止中（2026-03-16〜）**
+
+RPi5のリソース最適化のため、openclaw-gatewayサービスを停止中。cronジョブも停止しているためツイートは行われていません。
+
+```bash
+# 復帰する場合
+systemctl --user enable --now openclaw-gateway
+
+# 状態確認
+systemctl --user status openclaw-gateway
+```
+
+停止理由: RPi5でGoogle Colab連携（Kaggle実験自動化）を稼働させるため、メモリ負荷を軽減（openclaw-gateway: 約370MB使用）。
+
 ## 注意事項
 - X Free Tierは月500ポスト上限（1日16ツイート目安）
 - botアカウントはプロフィールにbot明記必須
