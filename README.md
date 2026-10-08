@@ -1,3 +1,11 @@
+> **⏸ 停止中（2026-10-08 時点）** — この bot は動いていない（Raspberry Pi 上の OpenClaw Gateway・Ollama とも停止）。
+> 再開しない理由：X API は 2026 年に月額プランも無料枠も無くなり、投稿 1 件ごとに課金される従量制になった（[公式の料金ページ](https://docs.x.com/x-api/getting-started/pricing)。
+> 「無料クレジット」もカード登録と自動チャージが条件）。無料で運用する方針なので再開しない。下の手順と構成は当時の記録として残している。
+> その後 Gemini から Ollama（`llama3.2-bot:3b`、[OLLAMA_SETUP.md](OLLAMA_SETUP.md)）へ移した経緯もある。
+>
+> **Stopped (as of 2026-10-08).** The bot no longer runs. Posting through the X API is now paid per post (no free tier),
+> so it will not be restarted; the setup below is kept as a record.
+
 # OpenClaw入門：ラズパイ × Geminiで自動ツイートbot
 
 ## 概要
